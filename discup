@@ -1,8 +1,17 @@
 #!/usr/bin/bash
 
+# Enviroment
+VERSION="0.0.0"
+
 # Exit codes
 ERR_MUST_BE_ROOT=1
 ERR_COMPRESSED_FILE_NOT_FOUND=2
+
+# Colors
+CL_RESET="\033[0m"
+CL_ERROR="\033[0;31m"
+CL_SUCCESS="\033[0;32m"
+CL_RUNNING="\033[1;33m"
 
 # Essentials Paths
 THIRD_PARTY_PROGRAMS=/opt
@@ -20,57 +29,89 @@ DISCORD_DESKTOP_CONFIG_FILE_PATH=$APPLICATIONS_PATH/discord.desktop
 # Script parameters
 UPDATE_VERSION_COMPRESSED_FILE_PATH=$1
 
+# Utils functions
+log_success() {
+    echo -e "[$CL_SUCCESS+$CL_RESET] $1"
+}
+log_error() {
+    echo -e "[$CL_ERROR-$CL_RESET] $1"
+}
+log_running() {
+    echo -e "[$CL_RUNNING*$CL_RESET] $1"
+}
+
+cat <<'END_HEADER'
+       ....             .       .x+=:.                                          
+   .xH888888Hx.        @88>    z`    ^%                                         
+ .H8888888888888:      %8P        .   <k              x.    .      .d``         
+ 888*"""?""*88888X      .       .@8Ned8"       .    .@88k  z88u    @8Ne.   .u   
+'f     d8x.   ^%88k   .@88u   .@^%8888"   .udR88N  ~"8888 ^8888    %8888:u@88N  
+'>    <88888X   '?8  ''888E` x88:  `)8b. <888'888k   8888  888R     `888I  888. 
+ `:..:`888888>    8>   888E  8888N=*8888 9888 'Y"    8888  888R      888I  888I 
+        `"*88     X    888E   %8"    R88 9888        8888  888R      888I  888I 
+   .xHHhx.."      !    888E    @8Wou 9%  9888        8888 ,888B .  uW888L  888' 
+  X88888888hx. ..!     888&  .888888P`   ?8888u../  "8888Y 8888"  '*88888Nu88P  
+ !   "*888888888"      R888" `   ^"F      "8888P'    `Y"   'YP    ~ '88888F`    
+        ^"***"`         ""                  "P'                      888 ^      
+                                                                     *8E        
+                                                                     '8>        
+                                                                      "         
+END_HEADER
+
+echo "Developed by SadSAndWich ~ Version $VERSION"
+echo ""
+
 if [[ "$EUID" -ne 0 ]]; then
-    echo "[-] Command must be executed as root."
+    log_error "Command must be executed as root."
     exit $ERR_MUST_BE_ROOT
 fi
 
 if [[ ! -f $UPDATE_VERSION_COMPRESSED_FILE_PATH ]]; then
-    echo "[-] Compressed file not found."
+    log_error "Compressed file not found."
     exit $ERR_COMPRESSED_FILE_NOT_FOUND
 fi
 
 if [[ -d $DISCORD_FOLDER_PATH ]]; then
-    echo "[*] Removing previous Discord version."
+    log_running "Removing previous Discord version."
     sudo rm -fr $DISCORD_FOLDER_PATH > /dev/null
 
     if [[ ! $? -eq 0 ]]; then
-        echo "[-] Failed to remove previous Discord version folder."
+        log_error "Failed to remove previous Discord version folder."
         exit $?
     fi
 
-    echo "[+] Removed current Discord version folder."
+    log_success "Removed current Discord version folder."
 fi
 
 if [[ -f $DISCORD_DESKTOP_CONFIG_FILE_PATH ]]; then
-    echo "[*] Removing previous Discord desktop config file."
+    log_running "Removing previous Discord desktop config file."
     sudo rm -fr $DISCORD_FOLDER_PATH > /dev/null
 
     if [[ ! $? -eq 0 ]]; then
-        echo "[-] Failed to remove previous Discord config file."
+        log_error "Failed to remove previous Discord config file."
         exit $?
     fi
 
-    echo "[+] Removed previous Discord desktop config file."
+    log_success "Removed previous Discord desktop config file."
 fi
 
 if [[ -L $DISCORD_BINARY_LINK_FILE_PATH ]]; then
-    echo "[*] Unlinking previous version."
+    log_running "Unlinking previous version."
     sudo unlink $DISCORD_BINARY_LINK_FILE_PATH > /dev/null
 
     if [[ ! $? -eq 0 ]]; then
-        echo "[-] Failed to unlink previous Discord binary file."
+        log_error "Failed to unlink previous Discord binary file."
         exit $?
     fi
 
-    echo "[+] Unlinked file."
+    log_success "Unlinked file."
 fi
 
-echo "[*] Extracting Discord to $DISCORD_PARENT_PATH"
+log_running "Extracting Discord to $DISCORD_PARENT_PATH"
 sudo tar -xvzf $UPDATE_VERSION_COMPRESSED_FILE_PATH -C $THIRD_PARTY_PROGRAMS > /dev/null
-echo "[+] Discord extracted to $DISCORD_PARENT_PATH"
+log_success "Discord extracted to $DISCORD_PARENT_PATH"
 
-echo "[*] Creating Discord desktop config file."
+log_running "Creating Discord desktop config file."
 
 cat > $DISCORD_DESKTOP_CONFIG_FILE_PATH <<EOF
 [Desktop Entry]
@@ -85,17 +126,17 @@ Categories=Network;InstantMessaging;
 Path=$BINARIES_PATH
 EOF
 
-echo "[+] Created Discord desktop config file."
+log_success "Created Discord desktop config file."
 
-echo "[*] Linking new binary file version."
+log_running "Linking new binary file version."
 sudo ln -s $DISCORD_BINARY_FILE_PATH $DISCORD_BINARY_LINK_FILE_PATH
 
 if [[ ! $? -eq 0 ]]; then
-    echo "[-] Failed to create Discord binary link file."
+    log_error "Failed to create Discord binary link file."
     exit $?
 fi
 
-echo "[+] Binary file linked."
+log_success "Binary file linked."
 
-echo "[+] Discord successfuly updated!"
-echo "[+] Type 'discord' or open from desktop."
+log_success "Discord successfuly updated!"
+log_success "Type 'discord' or open from desktop."
