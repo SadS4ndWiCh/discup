@@ -32,7 +32,7 @@ fi
 
 if [[ -d $DISCORD_FOLDER_PATH ]]; then
     echo "[*] Removing previous Discord version."
-    sudo rm -fr $DISCORD_FOLDER_PATH
+    sudo rm -fr $DISCORD_FOLDER_PATH > /dev/null
 
     if [[ ! $? -eq 0 ]]; then
         echo "[-] Failed to remove previous Discord version folder."
@@ -44,7 +44,7 @@ fi
 
 if [[ -f $DISCORD_DESKTOP_CONFIG_FILE_PATH ]]; then
     echo "[*] Removing previous Discord desktop config file."
-    sudo rm -fr $DISCORD_FOLDER_PATH
+    sudo rm -fr $DISCORD_FOLDER_PATH > /dev/null
 
     if [[ ! $? -eq 0 ]]; then
         echo "[-] Failed to remove previous Discord config file."
@@ -54,9 +54,9 @@ if [[ -f $DISCORD_DESKTOP_CONFIG_FILE_PATH ]]; then
     echo "[+] Removed previous Discord desktop config file."
 fi
 
-if [[ -f $DISCORD_BINARY_LINK_FILE_PATH ]]; then
+if [[ -L $DISCORD_BINARY_LINK_FILE_PATH ]]; then
     echo "[*] Unlinking previous version."
-    sudo unlink $DISCORD_BINARY_LINK_FILE_PATH
+    sudo unlink $DISCORD_BINARY_LINK_FILE_PATH > /dev/null
 
     if [[ ! $? -eq 0 ]]; then
         echo "[-] Failed to unlink previous Discord binary file."
@@ -67,7 +67,7 @@ if [[ -f $DISCORD_BINARY_LINK_FILE_PATH ]]; then
 fi
 
 echo "[*] Extracting Discord to $DISCORD_PARENT_PATH"
-sudo tar -xvzf $UPDATE_VERSION_COMPRESSED_FILE_PATH -C $THIRD_PARTY_PROGRAMS
+sudo tar -xvzf $UPDATE_VERSION_COMPRESSED_FILE_PATH -C $THIRD_PARTY_PROGRAMS > /dev/null
 echo "[+] Discord extracted to $DISCORD_PARENT_PATH"
 
 echo "[*] Creating Discord desktop config file."
@@ -92,4 +92,4 @@ sudo ln -s $DISCORD_BINARY_FILE_PATH $DISCORD_BINARY_LINK_FILE_PATH
 echo "[+] Binary file linked."
 
 echo "[+] Discord successfuly updated!"
-echo "[+] Type `discord` or open from desktop."
+echo "[+] Type 'discord' or open from desktop."
