@@ -89,6 +89,12 @@ echo "[+] Created Discord desktop config file."
 
 echo "[*] Linking new binary file version."
 sudo ln -s $DISCORD_BINARY_FILE_PATH $DISCORD_BINARY_LINK_FILE_PATH
+
+if [[ ! $? -eq 0 ]]; then
+    echo "[-] Failed to create Discord binary link file."
+    exit $?
+fi
+
 echo "[+] Binary file linked."
 
 echo "[+] Discord successfuly updated!"
