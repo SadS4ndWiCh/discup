@@ -84,7 +84,7 @@ fi
 
 if [[ -f $DISCORD_DESKTOP_CONFIG_FILE_PATH ]]; then
     log_running "Removing previous Discord desktop config file."
-    sudo rm -fr $DISCORD_FOLDER_PATH > /dev/null
+    sudo rm -fr $DISCORD_DESKTOP_CONFIG_FILE_PATH > /dev/null
 
     if [[ ! $? -eq 0 ]]; then
         log_error "Failed to remove previous Discord config file."
@@ -112,7 +112,7 @@ log_success "Discord extracted to $DISCORD_PARENT_PATH"
 
 log_running "Creating Discord desktop config file."
 
-cat > $DISCORD_DESKTOP_CONFIG_FILE_PATH <<EOF
+sudo cat <<EOF > $DISCORD_DESKTOP_CONFIG_FILE_PATH
 [Desktop Entry]
 Name=Discord
 StartupWMClass=discord
@@ -124,6 +124,11 @@ Type=Application
 Categories=Network;InstantMessaging;
 Path=$BINARIES_PATH
 EOF
+
+if [[ ! $? -eq 0 ]]; then
+    log_error "Failed to create Discord desktop config file."
+    exit $?
+fi
 
 log_success "Created Discord desktop config file."
 
