@@ -6,10 +6,10 @@ Second things second: Just a dumb script to setup the update of discord to linux
 
 ## how to use
 
-Just type the discord `.tar.gz` file and ok. Simple as that.
+Just type the following command and ok. Simple as that.
 
 ```sh
-$ sudo discup discord-0.0.93.tar.gz
+$ sudo discup
 ```
 
 ```
