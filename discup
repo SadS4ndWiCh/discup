@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 
 # Enviroment
-VERSION="0.0.0"
+VERSION="0.1.0"
 
 # Exit codes
 ERR_MUST_BE_ROOT=1
@@ -12,21 +12,22 @@ CL_RESET="\033[0m"
 CL_ERROR="\033[0;31m"
 CL_SUCCESS="\033[0;32m"
 CL_RUNNING="\033[1;33m"
+
 # Essentials Paths
 THIRD_PARTY_PROGRAMS=/opt
 BINARIES_PATH=/usr/local/bin
 APPLICATIONS_PATH=/usr/share/applications
 
 # Discord paths
+DISCORD_URL_DOWNLOAD="https://discord.com/api/download?platform=linux&format=tar.gz"
+DISCORD_DOWNLOAD_OUTPUT="discord.tar.gz"
+
 DISCORD_FOLDER_PATH=$THIRD_PARTY_PROGRAMS/Discord
 
 DISCORD_BINARY_FILE_PATH=$DISCORD_FOLDER_PATH/Discord
 DISCORD_BINARY_LINK_FILE_PATH=$BINARIES_PATH/discord
 
 DISCORD_DESKTOP_CONFIG_FILE_PATH=$APPLICATIONS_PATH/discord.desktop
-
-# Script parameters
-UPDATE_VERSION_COMPRESSED_FILE_PATH=$1
 
 # Utils functions
 log_success() {
@@ -65,7 +66,15 @@ if [[ "$EUID" -ne 0 ]]; then
     exit $ERR_MUST_BE_ROOT
 fi
 
-if [[ ! -f $UPDATE_VERSION_COMPRESSED_FILE_PATH ]]; then
+log_running "Downloading lastest Discord version."
+wget "$DISCORD_URL_DOWNLOAD" -O "$DISCORD_DOWNLOAD_OUTPUT" -q
+if [[ ! $? -eq 0 ]]; then
+    log_error "Failed to download new discord version."
+    exit $?
+fi
+log_success "Successfuly downloaded latest Discord version."
+
+if [[ ! -f $DISCORD_DOWNLOAD_OUTPUT ]]; then
     log_error "Compressed file not found."
     exit $ERR_COMPRESSED_FILE_NOT_FOUND
 fi
@@ -82,7 +91,7 @@ if [[ -d $DISCORD_FOLDER_PATH ]]; then
     log_success "Removed current Discord version folder."
 fi
 
-if [[ -f $DISCORD_DESKTOP_CONFIG_FILE_PATH ]]; then
+if [[ -f $DISCORD_DOWNLOAD_OUTPUT ]]; then
     log_running "Removing previous Discord desktop config file."
     sudo rm -fr $DISCORD_DESKTOP_CONFIG_FILE_PATH > /dev/null
 
@@ -107,8 +116,20 @@ if [[ -L $DISCORD_BINARY_LINK_FILE_PATH ]]; then
 fi
 
 log_running "Extracting Discord to $DISCORD_PARENT_PATH"
-sudo tar -xvzf $UPDATE_VERSION_COMPRESSED_FILE_PATH -C $THIRD_PARTY_PROGRAMS > /dev/null
+sudo tar -xvzf $DISCORD_DOWNLOAD_OUTPUT -C $THIRD_PARTY_PROGRAMS > /dev/null
+if [[ ! $? -eq 0 ]]; then
+    log_error "Failed to extract compressed discord file."
+    exit $?
+fi
 log_success "Discord extracted to $DISCORD_PARENT_PATH"
+
+log_running "Removing compressed file."
+rm -fr $DISCORD_DOWNLOAD_OUTPUT
+if [[ ! $? -eq 0 ]]; then
+    log_error "Failed to extracted compressed Discord file."
+    exit $?
+fi
+log_success "Successfuly removed compressed Discord file."
 
 log_running "Creating Discord desktop config file."
 
@@ -134,7 +155,6 @@ log_success "Created Discord desktop config file."
 
 log_running "Linking new binary file version."
 sudo ln -s $DISCORD_BINARY_FILE_PATH $DISCORD_BINARY_LINK_FILE_PATH
-
 if [[ ! $? -eq 0 ]]; then
     log_error "Failed to create Discord binary link file."
     exit $?
