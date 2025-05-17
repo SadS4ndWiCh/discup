@@ -4,6 +4,12 @@ First things first: I'm sorry 😶
 
 Second things second: Just a dumb script to setup the update of discord to linux.
 
+## install
+
+```
+$ wget https://github.com/SadS4ndWiCh/discup/releases/latest/download/discup && chmod +x discup && sudo mv discup /usr/local/bin
+```
+
 ## how to use
 
 Just type the following command and ok. Simple as that.
@@ -11,6 +17,39 @@ Just type the following command and ok. Simple as that.
 ```sh
 $ sudo discup
 ```
+
+## how it works
+
+TL;DR
+First it install the discord in `.tar.gz` compressed format, extract it and move the files to some specific directories.
+
+But the steps are:
+
+1. Removes all files from old version.
+2. Download the new Discord version from `https://discord.com/api/download?platform=linux&format=tar.gz`.
+3. Extract the compressed file.
+4. Removes compressed file.
+5. Move the folder to `/opt` directory.
+6. Create a copy of Discord's desktop configuration from `/opt/Discord/discord.desktop` to `/usr/share/applications`.
+7. Create a link of Discord's binary from `/opt/Discord/Discord` to `/usr/local/bin`.
+
+The final folder structure:
+
+```
+/opt
+|   /Discord
+|   |---Discord
+|   |---discord.desktop
+/usr
+|   /share
+|   |   /applications
+|   |   |---discord.desktop
+|   /local
+|   |   /bin
+|   |   |---discord -> /opt/Discord/Discord
+```
+
+---
 
 ```
        ....             .       .x+=:.                                          
