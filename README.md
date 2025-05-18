@@ -12,10 +12,22 @@ $ wget https://github.com/SadS4ndWiCh/discup/releases/latest/download/discup && 
 
 ## how to use
 
+```
+discup [DIRECTORY]
+
+DIRECTORY - The destination directory. Default to `/opt/Discord` if empty.
+```
+
 Just type the following command and ok. Simple as that.
 
 ```sh
-$ sudo discup
+$ discup
+```
+
+If you want, you can install it in a custom directory by giving the desired location.
+
+```sh
+$ discup ~/Programs/Discord
 ```
 
 ## how it works
@@ -29,27 +41,9 @@ But the steps are:
 2. Download the new Discord version from `https://discord.com/api/download?platform=linux&format=tar.gz`.
 3. Extract the compressed file.
 4. Removes compressed file.
-5. Move the folder to `/opt` directory.
-6. Create a copy of Discord's desktop configuration from `/opt/Discord/discord.desktop` to `/usr/share/applications`.
-7. Create a link of Discord's binary from `/opt/Discord/Discord` to `/usr/local/bin`.
-
-The final folder structure:
-
-```
-/opt
-|   /Discord
-|   |---Discord
-|   |---discord.desktop
-/usr
-|   /share
-|   |   /applications
-|   |   |---discord.desktop
-|   /local
-|   |   /bin
-|   |   |---discord -> /opt/Discord/Discord
-```
-
----
+5. Move the folder to desired directory.
+6. Create a copy of Discord's desktop configuration to `/usr/share/applications`.
+7. Create a link of Discord's binary to `/usr/local/bin`.
 
 ```
        ....             .       .x+=:.                                          
