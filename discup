@@ -3,7 +3,7 @@
 # Enviroment
 APP_NAME="discup"
 APP_DESCRIPTION="A dump script to update the discord in linux."
-APP_VERSION="0.1.0"
+APP_VERSION="0.2.0"
 APP_OWNER="SadS4ndWiCh"
 
 # Exit codes
