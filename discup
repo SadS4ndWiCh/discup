@@ -1,7 +1,10 @@
 #!/usr/bin/bash
 
 # Enviroment
-VERSION="0.1.0"
+APP_NAME="discup"
+APP_DESCRIPTION="A dump script to update the discord in linux."
+APP_VERSION="0.1.0"
+APP_OWNER="SadS4ndWiCh"
 
 # Exit codes
 ERR_MUST_BE_ROOT=1
@@ -11,23 +14,25 @@ ERR_COMPRESSED_FILE_NOT_FOUND=2
 CL_RESET="\033[0m"
 CL_ERROR="\033[0;31m"
 CL_SUCCESS="\033[0;32m"
-CL_RUNNING="\033[1;33m"
+CL_INFO="\033[1;33m"
 
 # Essentials Paths
-THIRD_PARTY_PROGRAMS=/opt
 BINARIES_PATH=/usr/local/bin
 APPLICATIONS_PATH=/usr/share/applications
+CONFIG_FOLDER=~/.config/$APP_NAME
+DESTINATION_DIRECTORY_LAST=$CONFIG_FOLDER/.discup_last
 
-# Discord paths
+# Arguments
+# discup [DESTINATION_DIRECTORY]
+DESTINATION_DIRECTORY=$1
+
+# Discord
 DISCORD_URL_DOWNLOAD="https://discord.com/api/download?platform=linux&format=tar.gz"
-DISCORD_DOWNLOAD_OUTPUT="discord.tar.gz"
-
-DISCORD_FOLDER_PATH=$THIRD_PARTY_PROGRAMS/Discord
-
-DISCORD_BINARY_FILE_PATH=$DISCORD_FOLDER_PATH/Discord
-DISCORD_BINARY_LINK_FILE_PATH=$BINARIES_PATH/discord
-
-DISCORD_DESKTOP_CONFIG_FILE_PATH=$APPLICATIONS_PATH/discord.desktop
+DISCORD_DOWNLOAD_OUTPUT=/tmp/discord.tar.gz
+DISCORD_FOLDER_NAME="Discord"
+DISCORD_CONFIG_DESKTOP_NAME="discord.desktop"
+DISCORD_BINARY_NAME="discord.desktop"
+DISCORD_DEFAULT_DESTINATION=/opt/Discord
 
 # Utils functions
 log_success() {
@@ -36,8 +41,19 @@ log_success() {
 log_error() {
     echo -e "[$CL_ERROR-$CL_RESET] $1"
 }
-log_running() {
-    echo -e "[$CL_RUNNING*$CL_RESET] $1"
+log_info() {
+    echo -e "[$CL_INFO*$CL_RESET] $1"
+}
+
+prompt() {
+    echo -n -e "[$CL_INFO*$CL_RESET] $1 [y/N] "
+    read -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        return 1
+    fi
+
+    return 0
 }
 
 cat <<'END_HEADER'
@@ -58,18 +74,148 @@ cat <<'END_HEADER'
                                                                       "         
 END_HEADER
 
-echo "Developed by SadSAndWich ~ Version $VERSION"
+echo "Developed by $APP_OWNER ~ Version $APP_VERSION"
 echo ""
 
-if [[ "$EUID" -ne 0 ]]; then
-    log_error "Command must be executed as root."
-    exit $ERR_MUST_BE_ROOT
+# Setup the config folder
+if [[ ! -d $CONFIG_FOLDER ]]; then
+    log_info "The discup config folder was not found."
+    log_info "Creating a new one at: $CONFIG_FOLDER"
+
+    mkdir -p $CONFIG_FOLDER 2> /dev/null
+    if [[ ! $? -eq 0 ]]; then
+        log_error "Failed to create the config folder."
+        log_error "Create it manually with the following command:"
+        log_error "mkdir $CONFIG_FOLDER"
+    else
+        log_success "Successfuly created the config folder."
+    fi
 fi
 
-log_running "Downloading lastest Discord version."
-wget "$DISCORD_URL_DOWNLOAD" -O "$DISCORD_DOWNLOAD_OUTPUT" -q
+# Checking the last directory register
+if [[ -d $CONFIG_FOLDER ]]; then
+    if [[ -f $DESTINATION_DIRECTORY_LAST ]]; then
+        OLD_DESTINATION_DIRECTORY_LAST=`cat $DESTINATION_DIRECTORY_LAST`
+
+        if [ -z $DESTINATION_DIRECTORY ]; then
+            log_info "The destination directory was not specified."
+            DESTINATION_DIRECTORY=$OLD_DESTINATION_DIRECTORY_LAST
+            log_success "Using the last directory: $OLD_DESTINATION_DIRECTORY_LAST"
+
+        elif [ $DESTINATION_DIRECTORY != $OLD_DESTINATION_DIRECTORY_LAST ]; then
+            log_info "The new directory is different from the last one."
+            prompt "The last directory can be removed? $OLD_DESTINATION_DIRECTORY_LAST"
+
+            if [[ $? -eq 1 ]]; then
+                log_info "Removing the last directory..."
+
+                if [ ! -w $OLD_DESTINATION_DIRECTORY_LAST ]; then
+                    sudo rm -r $OLD_DESTINATION_DIRECTORY_LAST 2> /dev/null
+                    if [[ $? -ne 0 ]]; then
+                        log_error "Failed to remove the last directory."
+                        log_error "Remove manually with the following command:"
+                        log_error "sudo rm -r $OLD_DESTINATION_DIRECTORY_LAST"
+                    fi
+                else
+                    rm -r $OLD_DESTINATION_DIRECTORY_LAST 2> /dev/null
+                    if [[ $? -ne 0 ]]; then
+                        log_error "Failed to remove the last directory."
+                        log_error "Remove manually with the following command:"
+                        log_error "rm -r $OLD_DESTINATION_DIRECTORY_LAST"
+                    fi
+                fi
+
+                
+                log_success "Successfuly removed the last destination."
+            else
+                log_error "You reject to delete last directory."
+            fi
+
+            echo $DESTINATION_DIRECTORY > $DESTINATION_DIRECTORY_LAST
+        fi
+    else
+        if [ -z $DESTINATION_DIRECTORY ]; then
+            DESTINATION_DIRECTORY=$DISCORD_DEFAULT_DESTINATION
+        fi
+
+        log_info "The register of the last directory was not found."
+        log_info "Creating a new one..."
+
+        echo $DESTINATION_DIRECTORY > $DESTINATION_DIRECTORY_LAST 2> /dev/null
+        if [[ ! $? -eq 0 ]]; then
+            log_error "Failed to create the register."
+            log_error "Create it manually with the following command:"
+            log_error "echo $DESTINATION_DIRECTORY > $DESTINATION_DIRECTORY_LAST"
+        else
+            log_success "Successfuly created the register at: $DESTINATION_DIRECTORY_LAST."
+        fi
+    fi
+else
+    if [ -z $DESTINATION_DIRECTORY ]; then
+        DESTINATION_DIRECTORY=$DISCORD_DEFAULT_DESTINATION
+    fi
+fi
+
+# Remove old version files
+if [[ -d $DESTINATION_DIRECTORY ]]; then
+    log_info "Removing previous Discord version..."
+
+    if [ ! -w $DESTINATION_DIRECTORY ]; then
+        sudo rm -r $DESTINATION_DIRECTORY 2> /dev/null
+        if [[ ! $? -eq 0 ]]; then
+          log_error "Failed to remove previous Discord version."
+          log_error "Remove manually with the following command:"
+          log_error "sudo rm -r $DESTINATION_DIRECTORY"
+          exit $?
+        fi
+    else
+        rm -r $DESTINATION_DIRECTORY 2> /dev/null
+        if [[ ! $? -eq 0 ]]; then
+          log_error "Failed to remove previous Discord version."
+          log_error "Remove manually with the following command:"
+          log_error "rm -r $DESTINATION_DIRECTORY"
+          exit $?
+        fi
+    fi
+
+    log_success "Successfuly removed previous Discord version."
+fi
+
+DISCORD_DESKTOP_CONFIG_FILE_PATH=$APPLICATIONS_PATH/discord.desktop
+if [[ -f $DISCORD_DESKTOP_CONFIG_FILE_PATH ]]; then
+    log_info "Removing previous Discord desktop config file..."
+    sudo rm -r $DISCORD_DESKTOP_CONFIG_FILE_PATH 2> /dev/null
+
+    if [[ ! $? -eq 0 ]]; then
+        log_error "Failed to remove previous Discord config file."
+        log_error "Remove manually with the following command:"
+        log_error "sudo rm -r $DISCORD_DESKTOP_CONFIG_FILE_PATH"
+        exit $?
+    fi
+
+    log_success "Successfuly removed previous Discord desktop config file."
+fi
+
+DISCORD_BINARY_LINK_FILE_PATH=$BINARIES_PATH/discord
+if [[ -L $DISCORD_BINARY_LINK_FILE_PATH ]]; then
+    log_info "Unlinking previous Discord version..."
+    sudo unlink $DISCORD_BINARY_LINK_FILE_PATH 2> /dev/null
+
+    if [[ ! $? -eq 0 ]]; then
+        log_error "Failed to unlink previous Discord version."
+        log_error "Remove manually with the following command:"
+        log_error "sudo rm -r $DISCORD_BINARY_LINK_FILE_PATH"
+        exit $?
+    fi
+
+    log_success "Successfuly unlinked previous Discord version."
+fi
+
+# Download Discord
+log_info "Downloading lastest Discord version..."
+wget "$DISCORD_URL_DOWNLOAD" -O "$DISCORD_DOWNLOAD_OUTPUT" -q 2> /dev/null
 if [[ ! $? -eq 0 ]]; then
-    log_error "Failed to download new discord version."
+    log_error "Failed to download the new Discord version."
     exit $?
 fi
 log_success "Successfuly downloaded latest Discord version."
@@ -79,68 +225,68 @@ if [[ ! -f $DISCORD_DOWNLOAD_OUTPUT ]]; then
     exit $ERR_COMPRESSED_FILE_NOT_FOUND
 fi
 
-if [[ -d $DISCORD_FOLDER_PATH ]]; then
-    log_running "Removing previous Discord version."
-    sudo rm -fr $DISCORD_FOLDER_PATH > /dev/null
-
-    if [[ ! $? -eq 0 ]]; then
-        log_error "Failed to remove previous Discord version folder."
-        exit $?
-    fi
-
-    log_success "Removed current Discord version folder."
-fi
-
-if [[ -f $DISCORD_DOWNLOAD_OUTPUT ]]; then
-    log_running "Removing previous Discord desktop config file."
-    sudo rm -fr $DISCORD_DESKTOP_CONFIG_FILE_PATH > /dev/null
-
-    if [[ ! $? -eq 0 ]]; then
-        log_error "Failed to remove previous Discord config file."
-        exit $?
-    fi
-
-    log_success "Removed previous Discord desktop config file."
-fi
-
-if [[ -L $DISCORD_BINARY_LINK_FILE_PATH ]]; then
-    log_running "Unlinking previous version."
-    sudo unlink $DISCORD_BINARY_LINK_FILE_PATH > /dev/null
-
-    if [[ ! $? -eq 0 ]]; then
-        log_error "Failed to unlink previous Discord binary file."
-        exit $?
-    fi
-
-    log_success "Unlinked file."
-fi
-
-log_running "Extracting Discord to $DISCORD_PARENT_PATH"
-sudo tar -xvzf $DISCORD_DOWNLOAD_OUTPUT -C $THIRD_PARTY_PROGRAMS > /dev/null
+log_info "Extracting latest Discord version..."
+tar -xvzf $DISCORD_DOWNLOAD_OUTPUT -C /tmp > /dev/null 2> /dev/null
 if [[ ! $? -eq 0 ]]; then
     log_error "Failed to extract compressed discord file."
     exit $?
 fi
-log_success "Discord extracted to $DISCORD_PARENT_PATH"
+log_success "Successfuly extracted Discord."
 
-log_running "Removing compressed file."
-rm -fr $DISCORD_DOWNLOAD_OUTPUT
+# Create the Destination Directory folder
+PARENT_DESTINATION_DIRECTORY=$(dirname $DESTINATION_DIRECTORY)
+if [[ ! -d $DESTINATION_DIRECTORY ]]; then
+    if [ ! -w $PARENT_DESTINATION_DIRECTORY ]; then
+        sudo mkdir -p $DESTINATION_DIRECTORY
+    else
+        mkdir -p $DESTINATION_DIRECTORY
+    fi
+fi
+
+log_info "Moving Discord to destination directory..."
+if [ ! -w $DESTINATION_DIRECTORY ]; then
+    sudo mv /tmp/Discord/* $DESTINATION_DIRECTORY 2> /dev/null
+    if [[ ! $? -eq 0 ]]; then
+        log_error "Failed to move Discord to destination directory."
+        exit $?
+    fi
+else
+    mv /tmp/Discord/* $DESTINATION_DIRECTORY 2> /dev/null
+    if [[ ! $? -eq 0 ]]; then
+        log_error "Failed to move Discord to destination directory."
+        exit $?
+    fi
+fi
+log_success "Successfuly moved Discord to destination directory."
+
+log_info "Removing compressed Discord file..."
+rm -fr $DISCORD_DOWNLOAD_OUTPUT 2> /dev/null
 if [[ ! $? -eq 0 ]]; then
     log_error "Failed to extracted compressed Discord file."
     exit $?
 fi
 log_success "Successfuly removed compressed Discord file."
 
-log_running "Creating Discord desktop config file."
+log_info "Linking new binary file version..."
 
-sudo cat <<EOF > $DISCORD_DESKTOP_CONFIG_FILE_PATH
+DISCORD_BINARY_FILE_PATH=$DESTINATION_DIRECTORY/Discord
+sudo ln -s $DISCORD_BINARY_FILE_PATH $DISCORD_BINARY_LINK_FILE_PATH 2> /dev/null
+if [[ ! $? -eq 0 ]]; then
+    log_error "Failed to create Discord binary link file."
+    exit $?
+fi
+
+log_success "Successfuly linked new binary file version."
+
+log_info "Creating Discord desktop config file..."
+sudo tee $DISCORD_DESKTOP_CONFIG_FILE_PATH > /dev/null 2> /dev/null <<EOF
 [Desktop Entry]
 Name=Discord
 StartupWMClass=discord
 Comment=All-in-one voice and text chat for gamers that's free, secure, and works on both your desktop and phone.
 GenericName=Internet Messenger
-Exec=$DISCORD_BINARY_FILE_PATH
-Icon=$DISCORD_FOLDER_PATH/discord.png
+Exec=$DISCORD_BINARY_LINK_FILE_PATH
+Icon=$DESTINATION_DIRECTORY/discord.png
 Type=Application
 Categories=Network;InstantMessaging;
 Path=$BINARIES_PATH
@@ -151,16 +297,7 @@ if [[ ! $? -eq 0 ]]; then
     exit $?
 fi
 
-log_success "Created Discord desktop config file."
+log_success "Successfuly created Discord desktop config file."
 
-log_running "Linking new binary file version."
-sudo ln -s $DISCORD_BINARY_FILE_PATH $DISCORD_BINARY_LINK_FILE_PATH
-if [[ ! $? -eq 0 ]]; then
-    log_error "Failed to create Discord binary link file."
-    exit $?
-fi
-
-log_success "Binary file linked."
-
-log_success "Discord successfuly updated!"
-log_success "Type 'discord' or open from desktop."
+log_success "Discord was successfuly updated."
+log_success "Type 'discord' or open from desktop to launch!"
