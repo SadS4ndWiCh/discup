@@ -13,9 +13,7 @@ $ wget https://github.com/SadS4ndWiCh/discup/releases/latest/download/discup && 
 ## how to use
 
 ```
-discup [DIRECTORY]
-
-DIRECTORY - The destination directory. Default to `/opt/Discord` if empty.
+discup
 ```
 
 Just type the following command and ok. Simple as that.
@@ -24,26 +22,9 @@ Just type the following command and ok. Simple as that.
 $ discup
 ```
 
-If you want, you can install it in a custom directory by giving the desired location.
-
-```sh
-$ discup ~/Programs/Discord
-```
-
 ## how it works
 
-TL;DR
-First it install the discord in `.tar.gz` compressed format, extract it and move the files to some specific directories.
-
-But the steps are:
-
-1. Removes all files from old version.
-2. Download the new Discord version from `https://discord.com/api/download?platform=linux&format=tar.gz`.
-3. Extract the compressed file.
-4. Removes compressed file.
-5. Move the folder to desired directory.
-6. Create a copy of Discord's desktop configuration to `/usr/share/applications`.
-7. Create a link of Discord's binary to `/usr/local/bin`.
+Just install the discord `.deb` file and install it with `dpkg -i` command.
 
 ```
        ....             .       .x+=:.                                          
