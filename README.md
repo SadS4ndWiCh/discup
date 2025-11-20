@@ -12,10 +12,6 @@ $ wget https://github.com/SadS4ndWiCh/discup/releases/latest/download/discup && 
 
 ## how to use
 
-```
-discup
-```
-
 Just type the following command and ok. Simple as that.
 
 ```sh
