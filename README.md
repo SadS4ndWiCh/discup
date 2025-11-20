@@ -20,7 +20,7 @@ $ discup
 
 ## how it works
 
-Just install the discord `.deb` file and install it with `dpkg -i` command.
+Just download the discord `.deb` file and install it with `dpkg -i` command.
 
 ```
        ....             .       .x+=:.                                          
